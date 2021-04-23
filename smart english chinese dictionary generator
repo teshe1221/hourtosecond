@@ -1,0 +1,163 @@
+@teshe
+
+from tkinter import *
+import re
+root=Tk()
+root.title("My English and Chinese Dictionary")
+root.configure()
+canvas=Canvas(root,bg="green",height=600,width=800)
+##creating a class named Teshe
+class Teshe:
+
+    def __init__(self):
+
+        self.myentry()
+        self.mylistbox()
+        self.mytext()
+        self.splitword()
+
+    # splitting the files from words,.txt
+    def splitword(self):
+        self.exlist = {}
+        self.english = []
+        self.chinese = []
+        self.file = open("words.txt")
+        for self.line in self.file:
+            self.line = self.line[0:-1]
+            self.x = self.line.split(" ", 1)
+            self.english.append(self.x[0])
+            self.chinese.append(self.x[1])
+        ##checks if there is word repetion and append them
+        for i in range(len(self.english)):
+            if self.english[i - 1] == self.english[i]:
+                self.chinese[i] = self.chinese[i - 1] + " " + self.chinese[i]
+            self.exlist[self.english[i]] = self.chinese[i]
+
+    ##   making the entry and frame
+    def myentry(self):
+        self.myFrame = Frame(root, bd=3)
+        self.myFrame.place(relx=0.55, rely=0.04, relwidth=1, relheight=0.08, anchor='n')
+
+        self.lower_frame = Frame(root, bd=1)
+        self.lower_frame.place(relx=0.5, rely=0.14, relwidth=0.9, relheight=0.8, anchor='n')
+        self.entry = Entry(self.myFrame, font=40)
+        self.entry.bind('<KeyRelease>', self.keypress)
+        self.entry.place(relx=0.001, rely=.01, relwidth=0.9, relheight=.9)
+        self.entry.focus()
+
+    ## making the list box
+    def mylistbox(self):
+        self.listbox = Listbox(self.lower_frame, background="#FFFFFF", fg="black", selectbackground="#4169E1",
+                               highlightcolor="white")
+        self.listbox.bind("<<ListboxSelect>>", self.cur)
+        self.listbox.place(relx=0.001, rely=.01, relwidth=1, relheight=0.75)
+
+        self.sbar = Scrollbar(self.listbox, command=self.listbox.yview)
+        self.listbox.configure(yscrollcommand=self.sbar.set)
+        self.sbar.pack(side=RIGHT, fill="y")
+
+    ##     making the text widgets
+    def mytext(self):
+        self.l2 = Text(self.lower_frame, borderwidth=3, bg="#E0E0E0")
+        self.l2.place(relx=0.1, rely=0.78, relwidth=0.2, relheight=0.08, anchor='n')
+
+        self.l3 = Text(self.lower_frame, borderwidth=3, bg="#E0E0E0")
+        self.l3.place(relx=0.1, rely=0.89, relwidth=0.2, relheight=0.12, anchor='n')
+
+        self.l4 = Text(self.lower_frame, borderwidth=3, bg="#E0E0E0")
+        self.l4.place(relx=0.35, rely=0.89, relwidth=0.2, relheight=0.12, anchor='n')
+
+        self.l5 = Text(self.lower_frame, borderwidth=3, bg="#E0E0E0")
+        self.l5.place(relx=0.74, rely=0.89, relwidth=0.52, relheight=0.12, anchor='n')
+
+    ##    showing the possible words that matched with the entered letter or character
+    def keypress(self, event):
+        # get text from entry
+        self.val = event.widget.get()
+        self.val = self.val.strip().upper()
+        # get data from test_list
+        self.listbox.delete(0, 'end')
+        self.count = 0
+        self.l2.delete(0.0, 'end')
+        self.l3.delete(0.0, 'end')
+        self.l4.delete(0.0, 'end')
+        self.l5.delete(0.0, 'end')
+
+        if self.val == '':
+            d = self.exlist
+        ## check if the input is chinese
+        elif (0x4e00 <= ord((list(self.val)[0])) > 0x4e00 & ord(list(self.val)[0]) < 0x9fff):
+            file = open("words.txt", "r")
+            exlist = {}
+            for line in file:
+                line = line[0:-1]
+                x = line.split(" ", 1)
+                a = x[0]
+                b = x[1].split(".", 1)
+                l = b[0]
+                m = b[-1].strip("&ad. ad. v. &n &vi. vt. a. n.&pron.  prep pron. ad. conj. n.BoB!!! n.de-tona-tor!!!")
+                exlist[m] = a
+            for self.words in exlist:
+                # if self.val in self.words:
+                if re.findall(self.val, self.words):
+                    self.listbox.insert('end', exlist[self.words])
+                    self.count = self.count + 1
+            self.l2.insert(0.0, "匹配个数:", 1.0, self.count)
+
+        else:
+
+            for words in self.exlist:
+                # if self.val in words.upper():
+                if re.match(self.val.upper(), words.upper()):
+                    self.listbox.insert('end', words)
+                    self.count = self.count + 1
+
+            self.l2.insert(0.0, "Words:", 1.0, self.count)
+
+    ## this will extract and split only the chinese characters
+    def split(self, str):
+        regex = r"[\u4e00-\ufaff,\u0028,\u0021,\u002D,\00B7]"
+        self.ch = re.findall(regex, str, re.UNICODE)
+        return self.ch
+
+    ## this will extract the chinese part and the type of the english word
+    def meaning(self, sel):
+        self.tirgum = []
+        self.aynet = []
+        if self.sel in self.exlist:
+            type = self.exlist[self.sel]
+            self.x = type.split(" ")
+            self.length = len(self.x)
+            for k in range(self.length):
+                self.kth_meaning = self.x[k]
+                self.chinese = self.split(self.kth_meaning)
+                self.sim = self.kth_meaning.split(str(self.chinese[0]), 1)
+                self.fo = self.chinese[0] + self.sim[1]
+                self.tirgum.insert(k, self.fo)
+                self.aynet.insert(k, self.sim[0])
+            return self.aynet, self.tirgum
+
+    ## insert the highlighted word from the listbox to the display boixes
+    def cur(self, event):
+        self.sel = str(self.listbox.get(self.listbox.curselection()))
+        self.l3.delete(0.0, 'end')
+        self.l4.delete(0.0, 'end')
+        self.l5.delete(0.0, 'end')
+        self.l3.insert(0.0, self.sel)
+        self.a, self.b = self.meaning(self.sel)
+        if len(self.a) == 2 and len(self.b) == 2:
+            self.l4.insert('end', "1." + self.a[0] + "\n" + "2." + self.a[1])
+            self.l5.insert('end', "1." + self.b[0] + "\n" + "2." + self.b[1])
+        elif len(self.a) == 3 and len(self.b) == 3:
+            self.l4.insert('end', "1." + self.a[0] + "\n" + "2." + self.a[1] + "\n" + "3." + self.a[2])
+            self.l5.insert('end', "1." + self.b[0] + "\n" + "2." + self.b[1] + "\n" + "3." + self.b[2])
+        elif len(self.a) == 4 and len(self.b) == 4:
+            self.l4.insert('end', "1." + self.a[0] + " " + self.a[1] + "\n" + "2." + self.a[2] + "\n" + "3." + self.a[3])
+            self.l5.insert('end', "1." + self.b[0] + " " + self.b[1] + "\n" + "2." + self.b[2] + "\n" + "3." + self.b[3])
+        else:
+            self.l4.insert('end', "1." + self.a[0])
+            self.l5.insert('end', "1." + self.b[0])
+
+d = Teshe()
+root.mainloop()
+
